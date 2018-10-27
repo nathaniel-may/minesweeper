@@ -61,8 +61,6 @@ object MineSweeper{
     MineSweeper(dim, randBombs)
   }
 
-  //custom game creation for testing
-  //TODO move this into implicit test helper?
   def apply(dim: Dim, bombs: List[Square]): Option[MineSweeper] =
     MineSweeper(dim, buildGraph(dim, bombs))
 
