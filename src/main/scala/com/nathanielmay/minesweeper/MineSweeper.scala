@@ -40,30 +40,39 @@ case object Lose extends GameResult
 object MineSweeper{
 
   //smart constructor called by other sugared apply methods
-  private def apply(dim: Dim, graph: Map[Square, Tile]): Option[MineSweeper] = {
-    if (!dim.isAtLeast(Dim(H(2), V(2)))) None
-    else if (graph.values.count(_.value == Bomb) >= dim.area) None
-    else if (graph.keys.exists(!dim.contains(_))) None
-    else Some(new MineSweeper(dim, graph))
-  }
+  private def apply(dim: Dim, graph: Map[Square, Tile]): Option[MineSweeper] =
+    if (valid(dim, graph)) Some(new MineSweeper(dim, graph))
+    else None
 
   //standard game creation
   def apply(dim: Dim, bombs: Int): Option[MineSweeper] = {
-
-    //quadratic function
-    val randBombs = (0 until dim.area).toList.filterNot(
-      List.tabulate(bombs)(x => (scala.math.random()*(dim.area-x)).toInt)
+    //quadratic function TODO simplify
+    def randBombs(b: Int) = (0 until dim.area).toList.filterNot(
+      List.tabulate(b)(x => (scala.math.random()*(dim.area-x)).toInt)
       .foldLeft((0 until dim.area).toList)((allSquares, bomb) =>
         allSquares.splitAt(bomb) match { case (pre, post) => pre ++ post.tail })
       .toSet)
       .map(rand => Square(H(rand / dim.h.value), V(rand % dim.h.value)))
 
-    MineSweeper(dim, randBombs)
+    // protects against generating an enormous amount of bombs with an expensive function
+    if (valid(dim)) MineSweeper(dim, randBombs(bombs))
+    else None
   }
 
   def apply(dim: Dim, bombs: List[Square]): Option[MineSweeper] =
-    MineSweeper(dim, buildGraph(dim, bombs))
+    // protects buildGraph from large numbers
+    if (valid(dim)) MineSweeper(dim, buildGraph(dim, bombs))
+    else None
 
+  private def valid(dim: Dim): Boolean =
+    dim.isAtLeast(Dim(H(2), V(2)))
+
+  private def valid(dim: Dim,  graph: Map[Square, Tile]): Boolean =
+    valid(dim) &&
+      graph.values.count(_.value == Bomb) < dim.area &&
+      graph.keys.forall(dim.contains)
+
+  // TODO this is really expensive for large games. Do it incrementally on reveal instead?
   private def buildGraph(dim: Dim, bombs: List[Square]): Map[Square, Tile] = {
     def neighbors(square: Square): List[Square] =
       (for {
