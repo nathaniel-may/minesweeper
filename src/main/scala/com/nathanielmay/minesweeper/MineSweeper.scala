@@ -4,13 +4,34 @@ package com.nathanielmay.minesweeper
 case class H(value: Int)
 case class V(value: Int)
 
-case class Dim(h: H, v: V) {
-  val area: Int = h.value * v.value
+// allows to force Dim case class creation through apply to make illegal states unrepresentable
+sealed trait Dim {
+  val h:    H
+  val v:    V
+  val area: Int
 
-  def contains(s: Square): Boolean = contains(s.h) && contains(s.v)
-  def contains(x: H):      Boolean = x.value >= 0 && x.value < h.value
-  def contains(x: V):      Boolean = x.value >= 0 && x.value < v.value
-  def isAtLeast(d: Dim):   Boolean = h.value >= d.h.value && v.value >= d.v.value
+  def contains(s: Square): Boolean
+  def contains(x: H):      Boolean
+  def contains(x: V):      Boolean
+}
+
+// forces Dim csae class creation through apply to make illegal states unrepresentable
+object Dim {
+
+  def apply(h: H, v: V): Option[Dim] = {
+    val max = scala.math.sqrt(Int.MaxValue).toInt // area val cannot hit Int overflow
+    if (h.value <= 0 || v.value <= 0 || h.value > max || v.value > max) None
+    else Some(DimImpl(h, v))
+  }
+
+  private case class DimImpl(h: H, v: V) extends Dim {
+    val area: Int = h.value * v.value
+
+    def contains(s: Square): Boolean = contains(s.h) && contains(s.v)
+    def contains(x: H):      Boolean = x.value >= 0 && x.value < h.value
+    def contains(x: V):      Boolean = x.value >= 0 && x.value < v.value
+  }
+
 }
 
 case class Square(h: H, v: V)
@@ -32,8 +53,11 @@ sealed trait GameResult
 case object Win extends GameResult
 case object Lose extends GameResult
 
-//using abstract class until Scala adds params for traits: https://docs.scala-lang.org/sips/trait-parameters.html
-sealed abstract class MineSweeper(dim: Dim, visible: Map[Square, MSValue]){
+//awkward construction until traits can take params: https://docs.scala-lang.org/sips/trait-parameters.html
+sealed trait MineSweeper {
+  val dim:     Dim
+  val visible: Map[Square, MSValue]
+
   override def toString: String =
     (0 until dim.v.value).toList
       .map(v => (0 until dim.h.value).toList.map(h => Square(H(h), V(v))))
@@ -43,7 +67,7 @@ sealed abstract class MineSweeper(dim: Dim, visible: Map[Square, MSValue]){
 
 object Game {
   //standard game creation
-  def apply(dim: Dim, bombs: Int): Option[Game] = {
+  def apply(dim: Dim, bombs: Int): Option[Game] = { //TODO does this need to be an option?
     //quadratic function TODO simplify
     def randBombs(b: Int) = (0 until dim.area).toList.filterNot(
       List.tabulate(b)(x => (scala.math.random()*(dim.area-x)).toInt)
@@ -53,22 +77,17 @@ object Game {
       .map(rand => Square(H(rand / dim.h.value), V(rand % dim.h.value)))
 
     // protects against generating an enormous amount of bombs with an expensive function
-    if (valid(dim)) Game(dim, randBombs(bombs))
-    else None
+    Game(dim, randBombs(bombs))
   }
 
   //TODO make sure this is usable in tests while private
   def apply(dim: Dim, bombs: List[Square]): Option[Game] =
-    if (valid(dim) && bombs.forall(dim.contains)) Some(Game(dim, Map(), bombs))
+    if (bombs.forall(dim.contains)) Some(Game(dim, Map(), bombs))
     else None
-
-  private def valid(dim: Dim): Boolean =
-    dim.isAtLeast(Dim(H(2), V(2)))
 
 }
 
-case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Square])
-  extends MineSweeper(dim: Dim, visible: Map[Square, MSValue]) {
+case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Square]) extends MineSweeper {
 
   //called when UI receives a click
   def reveal(sq: Square): MineSweeper = {
@@ -102,42 +121,41 @@ case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Sq
 
 }
 
-case class EndGame private (dim: Dim, visible: Map[Square, MSValue], state: GameResult)
-  extends MineSweeper(dim: Dim, visible: Map[Square, MSValue]) {
+case class EndGame private (dim: Dim, visible: Map[Square, MSValue], state: GameResult) extends MineSweeper {
   override def toString: String = List(super.toString, state).mkString("\n")
 }
 
-object Play{
-
-  def main(args: Array[String]): Unit = {
-    play4x4()
-  }
-
-  def play4x4(): MineSweeper =
-    List(Square(0, 0),
-      Square(3, 3),
-      Square(1, 3),
-      Square(0, 3),
-      Square(0, 0))
-    .foldLeft[MineSweeper](Game(Dim(4,4), List(Square(2,3), Square(0,2))).get) {
-    (game, square) => {val next = takeTurn(game, square); println(s"$next\n"); next} }
-
-  def play2x2(): Unit = {
-    val g0 = Game(Dim(2,2), List(Square(0,0))).get
-    val g1 = takeTurn(g0, Square(1, 0))
-    val g2 = takeTurn(g1, Square(1, 1))
-    val g3 = takeTurn(g2, Square(0, 1))
-    println(List(g0, g1, g2, g3).mkString("", "\n\n", "\n"))
-  }
-
-  def takeTurn(game: MineSweeper, sq: Square): MineSweeper = game match {
-    case end:  EndGame => end
-    case game: Game    => game.reveal(sq)
-  }
-
-  implicit def hAble(i: Int): H = H(i)
-  implicit def vAble(i: Int): V = V(i)
-
-}
+//object Play{
+//
+//  def main(args: Array[String]): Unit = {
+//    play4x4()
+//  }
+//
+//  def play4x4(): MineSweeper =
+//    List(Square(0, 0),
+//      Square(3, 3),
+//      Square(1, 3),
+//      Square(0, 3),
+//      Square(0, 0))
+//    .foldLeft[MineSweeper](Game(Dim(4,4), List(Square(2,3), Square(0,2))).get) {
+//    (game, square) => {val next = takeTurn(game, square); println(s"$next\n"); next} }
+//
+//  def play2x2(): Unit = {
+//    val g0 = Game(Dim(2,2), List(Square(0,0))).get
+//    val g1 = takeTurn(g0, Square(1, 0))
+//    val g2 = takeTurn(g1, Square(1, 1))
+//    val g3 = takeTurn(g2, Square(0, 1))
+//    println(List(g0, g1, g2, g3).mkString("", "\n\n", "\n"))
+//  }
+//
+//  def takeTurn(game: MineSweeper, sq: Square): MineSweeper = game match {
+//    case end:  EndGame => end
+//    case game: Game    => game.reveal(sq)
+//  }
+//
+//  implicit def hAble(i: Int): H = H(i)
+//  implicit def vAble(i: Int): V = V(i)
+//
+//}
 
 

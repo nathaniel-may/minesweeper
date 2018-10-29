@@ -9,25 +9,19 @@ import testingUtil.Util.{hAble, vAble}
 object Arbitrarily {
   import Generators._
 
-  implicit val anyDim: Arbitrary[Dim] = Arbitrary(dimGen)
-  implicit val aDim:   Arbitrary[Dim] = Arbitrary(validDimGen)
+  implicit val aDim:   Arbitrary[Dim] = Arbitrary(dimGen)
 
 }
 
 private object Generators {
 
-  //generating enormous minesweeper games is expensive and shouldn't be done strictly
+  //generating enormous minesweeper games is expensive and shouldn't be constructed all at once
   val maxDim = 1000
 
-  val dimGen: Gen[Dim] =
-    dimAtLeast(Dim(Int.MinValue, maxDim))
-
-  val validDimGen: Gen[Dim] =
-    dimAtLeast(Dim(2, 2))
-
-  def dimAtLeast(d: Dim): Gen[Dim] = for {
-    h <- choose(d.h.value, maxDim)
-    v <- choose(d.v.value, maxDim)
-  } yield Dim(h, v)
+  val dimGen: Gen[Dim] = for {
+    h <- choose(1, maxDim)
+    v <- choose(1, maxDim)
+    if Dim(h, v).isDefined
+  } yield Dim(h, v).get
 
 }

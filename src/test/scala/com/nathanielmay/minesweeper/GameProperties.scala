@@ -5,15 +5,25 @@ import org.scalacheck.Properties
 import org.scalacheck.Prop.{BooleanOperators, forAll}
 
 //testing
-import testingUtil.Arbitrarily.anyDim
+import testingUtil.Arbitrarily.aDim
 
 //project
 
 object GameProperties extends Properties("Board"){
 
-  property("cannot create a game smaller than 2x2") = forAll {
-    d: Dim =>
-      !d.isAtLeast(Dim(H(2), V(2))) ==> Game(d, 1).isEmpty
+  //TODO put in own object
+  property("dim must be at least 1x1 and less than sqrt(Int.MaxValue)") = forAll {
+    (dh: Int, dv: Int) => (dh, dv) match {
+      case (h, v) =>
+        if (List(h, v, h*v).exists(_ < 1) || List(h, v).exists(_ > scala.math.sqrt(Int.MaxValue)))
+          Dim(H(h), V(v)).isEmpty
+        else Dim(H(h), V(v)).isDefined
+    }
   }
+
+//  property("can't have more bombs than tiles") = forAll {
+//    (d: Dim, i: Int) =>
+//      (i >= d.area) ==> Game(d, i).isEmpty
+//  }
 
 }
