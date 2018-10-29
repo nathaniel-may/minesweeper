@@ -2,10 +2,11 @@ package com.nathanielmay.minesweeper
 
 //scalacheck
 import org.scalacheck.Properties
-import org.scalacheck.Prop.{BooleanOperators, forAll}
+import org.scalacheck.Prop.{BooleanOperators, forAll, exists}
 
 //testing
-import testingUtil.Arbitrarily.aDim
+import testingUtil.Arbitrarily.{aDim, aRun}
+import testingUtil.Util.{Run, TestableGame}
 
 //project
 
@@ -29,6 +30,12 @@ object GameProperties extends Properties("MineSweeper game"){
   property("can't have more bombs than tiles") = forAll {
     (d: Dim, i: Int) =>
       (i >= d.area) ==> Game(d, i).isEmpty
+  }
+
+  property("can win a game") = exists {
+    run: Run => run.run match {
+        case EndGame(_, _, result) => result == Win
+      }
   }
 
 }
