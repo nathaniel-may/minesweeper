@@ -82,6 +82,7 @@ case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Sq
       } yield neighbor).toList
 
     //recursive function for when a zero is clicked
+    //TODO make more functional
     def floodReveal(toReveal: Square, midFlood: Map[Square, MSValue]): Map[Square, MSValue] = {
       if (midFlood.contains(toReveal)) midFlood
       else {
@@ -93,9 +94,6 @@ case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Sq
             (m, sq) => floodReveal(sq, m) }
       }
     }
-
-    //TODO REMOVE
-    println(neighbors(Square(H(0), V(0))).filterNot(visible.contains))
 
     if (bombs.contains(sq)) EndGame(dim, visible.updated(sq, Bomb), Lose)
     else Game(dim, floodReveal(sq, visible), bombs) match {
