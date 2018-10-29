@@ -20,10 +20,6 @@ private sealed trait Visibility
 private case object Revealed extends Visibility
 private case object Hidden extends Visibility
 
-private case class Tile(visibility: Visibility, value: MSValue, neighbors: List[Square]){
-  def reveal: Tile = copy(visibility = Revealed)
-}
-
 //sum type for bombs and ints
 sealed trait MSValue
 case object Bomb extends MSValue{ override def toString = "B" }
@@ -36,16 +32,18 @@ sealed trait GameResult
 case object Win extends GameResult
 case object Lose extends GameResult
 
+//using abstract class until Scala adds params for traits: https://docs.scala-lang.org/sips/trait-parameters.html
+sealed abstract class MineSweeper(dim: Dim, visible: Map[Square, MSValue]){
+  override def toString: String =
+    (0 until dim.v.value).toList
+      .map(v => (0 until dim.h.value).toList.map(h => Square(H(h), V(v))))
+      .map(row => row.map(visible.getOrElse(_, " ").toString).mkString("|","|","|"))
+      .mkString("\n")
+}
 
-object MineSweeper{
-
-  //smart constructor called by other sugared apply methods
-  private def apply(dim: Dim, graph: Map[Square, Tile]): Option[MineSweeper] =
-    if (valid(dim, graph)) Some(new MineSweeper(dim, graph))
-    else None
-
+object Game {
   //standard game creation
-  def apply(dim: Dim, bombs: Int): Option[MineSweeper] = {
+  def apply(dim: Dim, bombs: Int): Option[Game] = {
     //quadratic function TODO simplify
     def randBombs(b: Int) = (0 until dim.area).toList.filterNot(
       List.tabulate(b)(x => (scala.math.random()*(dim.area-x)).toInt)
@@ -55,25 +53,24 @@ object MineSweeper{
       .map(rand => Square(H(rand / dim.h.value), V(rand % dim.h.value)))
 
     // protects against generating an enormous amount of bombs with an expensive function
-    if (valid(dim)) MineSweeper(dim, randBombs(bombs))
+    if (valid(dim)) Game(dim, randBombs(bombs))
     else None
   }
 
-  def apply(dim: Dim, bombs: List[Square]): Option[MineSweeper] =
-    // protects buildGraph from large numbers
-    if (valid(dim)) MineSweeper(dim, buildGraph(dim, bombs))
+  //TODO make sure this is usable in tests while private
+  def apply(dim: Dim, bombs: List[Square]): Option[Game] =
+    if (valid(dim) && bombs.forall(dim.contains)) Some(Game(dim, Map(), bombs))
     else None
 
   private def valid(dim: Dim): Boolean =
     dim.isAtLeast(Dim(H(2), V(2)))
 
-  private def valid(dim: Dim,  graph: Map[Square, Tile]): Boolean =
-    valid(dim) &&
-      graph.values.count(_.value == Bomb) < dim.area &&
-      graph.keys.forall(dim.contains)
+}
 
-  // TODO this is really expensive for large games. Do it incrementally on reveal instead?
-  private def buildGraph(dim: Dim, bombs: List[Square]): Map[Square, Tile] = {
+case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Square]) extends MineSweeper(dim: Dim, visible: Map[Square, MSValue]) {
+
+  //called when UI receives a click
+  def reveal(sq: Square): MineSweeper = {
     def neighbors(square: Square): List[Square] =
       (for {
         hDiff <- -1 to 1
@@ -83,87 +80,55 @@ object MineSweeper{
         if dim.contains(neighbor)
       } yield neighbor).toList
 
-    val bombMap = bombs.map(_ -> Bomb).toMap
-
-    (for{h <- 0 until dim.h.value; v <- 0 until dim.v.value} yield Square(H(h), V(v)))
-      .map(square => square -> bombMap.getOrElse(square, NearBombs(-1)))
-      .toMap
-      .foldLeft(Map[Square, Tile]())((m, kv) => kv._2 match {
-        case Bomb => m.updated(kv._1, Tile(Hidden, kv._2, neighbors(kv._1)))
-        case NearBombs(_) => m.updated(kv._1, Tile(Hidden, NearBombs(neighbors(kv._1).count(bombMap.getOrElse(_, "") == Bomb)), neighbors(kv._1)))
-      })
-  }
-}
-
-//cannot make case class because of overloaded apply smart constructor
-class MineSweeper private (dim: Dim, graph: Map[Square, Tile]) {
-
-  //called when UI receives a click
-  def reveal(square: Square): MineSweeper = {
     //recursive function for when a zero is clicked
-    def floodReveal(toReveal: Square, midFloodGraph: Map[Square, Tile]): Map[Square, Tile] = {
-      graph(toReveal).value match {
-        case Bomb => midFloodGraph //floods should stop at numbers and not reach bombs anyway
-        case NearBombs(n) if n >  0 => midFloodGraph.updated(toReveal, graph(toReveal).reveal)
-        case NearBombs(n) if n <= 0 => if(Revealed == midFloodGraph(toReveal).visibility) midFloodGraph else
-          graph(toReveal).neighbors.foldLeft(midFloodGraph.updated(toReveal, graph(toReveal).reveal))((m, neighbor) =>
-            floodReveal(neighbor, m))
+    def floodReveal(toReveal: Square, midFlood: Map[Square, MSValue]): Map[Square, MSValue] = {
+      if (midFlood.contains(toReveal)) midFlood
+      else {
+        val ns = neighbors(toReveal)
+        val bombCount = ns.count(bombs.contains)
+        if (bombCount != 0) midFlood.updated(toReveal, NearBombs(bombCount))
+        else ns.foldLeft(midFlood) { (m, sq) => floodReveal(sq, m) }
       }
     }
 
-    if (!dim.contains(square)) this
-    else if (Hidden != graph(square).visibility) this
-    else if (state.isDefined) this
-    else MineSweeper(dim, floodReveal(square, graph)).get
+    if (bombs.contains(sq)) EndGame(dim, visible.updated(sq, Bomb), Lose)
+    else Game(dim, floodReveal(sq, visible), bombs) match {
+      case Game(d, v, bs) if v.size == d.area - bs.size => EndGame(d, v, Win)
+      case g: Game => g
+    }
   }
 
-  //exposing only public types to UI
-  lazy val revealedTiles: Map[Square, MSValue] =
-    graph.filter(_._2.visibility == Revealed).mapValues(_.value)
+}
 
-  lazy val state: Option[GameResult] = {
-
-    def stateCheck(tiles: List[Tile], bombs: Int, hidden: Int): Option[GameResult] =
-      tiles match {
-        case Nil if hidden == bombs => Some(Win)
-        case Nil if hidden >  bombs => None
-        case Nil if hidden <  bombs => Some(Lose)
-        case h :: _ if Revealed == h.visibility && h.value == Bomb => Some(Lose)
-        case h :: t => stateCheck(t,
-                                  if (Bomb   == h.value)      bombs  + 1 else bombs,
-                                  if (Hidden == h.visibility) hidden + 1 else hidden)
-      }
-
-    stateCheck(graph.values.toList, 0, 0)
-  }
-
-  //for printing purposes
-  override def toString: String = {
-    (0 until dim.v.value).toList
-      .map(v => (0 until dim.h.value).toList.map(h => Square(H(h), V(v))))
-      .map(row => row.map(revealedTiles.getOrElse(_, " ").toString).mkString("|","|","|"))
-      .mkString("\n")
-  }
-
+case class EndGame private (dim: Dim, visible: Map[Square, MSValue], state: GameResult) extends MineSweeper(dim: Dim, visible: Map[Square, MSValue]) {
+  override def toString: String = List(super.toString, state).mkString("\n")
 }
 
 object Play{
 
   def main(args: Array[String]): Unit = {
-    println(List(Square(0, 0),
-         Square(3, 3),
-         Square(1, 3),
-         Square(0, 3))
-      .foldLeft(MineSweeper(Dim(4,4), List(Square(2,3), Square(0,2))).get)((game, square) =>
-        takeTurn(game, square)
-      ).state.getOrElse("Keep Playing"))
+    play2x2()
   }
 
-  def takeTurn(game: MineSweeper, square: Square): MineSweeper = {
-    println(game)
-    println(game.state.getOrElse("Keep Playing"))
-    println()
-    game.reveal(square)
+  def play4x4(): MineSweeper =
+    List(Square(0, 0),
+      Square(3, 3),
+      Square(1, 3),
+      Square(0, 3))
+    .foldLeft[MineSweeper](Game(Dim(4,4), List(Square(2,3), Square(0,2))).get) {
+    (game, square) => {val next = takeTurn(game, square); println(s"$next\n"); next} }
+
+  def play2x2(): Unit = {
+    val g0 = Game(Dim(2,2), List(Square(0,0))).get
+    val g1 = takeTurn(g0, Square(1, 0))
+    val g2 = takeTurn(g1, Square(1, 1))
+    val g3 = takeTurn(g2, Square(0, 1))
+    println(List(g0, g1, g2, g3).mkString("", "\n\n", "\n"))
+  }
+
+  def takeTurn(game: MineSweeper, sq: Square): MineSweeper = game match {
+    case end:  EndGame => end
+    case game: Game    => game.reveal(sq)
   }
 
   implicit def hAble(i: Int): H = H(i)
