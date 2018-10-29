@@ -69,15 +69,16 @@ object Game {
   //standard game creation
   def apply(dim: Dim, bombs: Int): Option[Game] = { //TODO does this need to be an option?
     //quadratic function TODO simplify
-    def randBombs(b: Int) = (0 until dim.area).toList.filterNot(
-      List.tabulate(b)(x => (scala.math.random()*(dim.area-x)).toInt)
-      .foldLeft((0 until dim.area).toList)((allSquares, bomb) =>
-        allSquares.splitAt(bomb) match { case (pre, post) => pre ++ post.tail })
-      .toSet)
-      .map(rand => Square(H(rand / dim.h.value), V(rand % dim.h.value)))
+    def randBombs(b: Int): List[Square] =
+      (0 until dim.area).toList.filterNot(
+        List.tabulate(b)(x => (scala.math.random()*(dim.area-x)).toInt)
+        .foldLeft((0 until dim.area).toList)((allSquares, bomb) =>
+          allSquares.splitAt(bomb) match { case (pre, post) => pre ++ post.tail })
+        .toSet)
+        .map(rand => Square(H(rand / dim.h.value), V(rand % dim.h.value)))
 
-    // protects against generating an enormous amount of bombs with an expensive function
-    Game(dim, randBombs(bombs))
+    if (bombs >= dim.area || bombs < 0) None
+    else Game(dim, randBombs(bombs))
   }
 
   //TODO make sure this is usable in tests while private

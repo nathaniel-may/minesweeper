@@ -9,7 +9,7 @@ import testingUtil.Util.{hAble, vAble}
 object Arbitrarily {
   import Generators._
 
-  implicit val aDim:   Arbitrary[Dim] = Arbitrary(dimGen)
+  implicit val aDim:           Arbitrary[Dim] = Arbitrary(dimGen)
 
 }
 
@@ -20,8 +20,7 @@ private object Generators {
 
   val dimGen: Gen[Dim] = for {
     h <- choose(1, maxDim)
-    v <- choose(1, maxDim)
-    if Dim(h, v).isDefined
+    v <- if (h == 1) choose(2, maxDim) else choose(1, maxDim)
   } yield Dim(h, v).get
 
 }

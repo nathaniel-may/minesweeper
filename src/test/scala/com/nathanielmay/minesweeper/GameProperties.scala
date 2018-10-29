@@ -9,7 +9,7 @@ import testingUtil.Arbitrarily.aDim
 
 //project
 
-object GameProperties extends Properties("Board"){
+object GameProperties extends Properties("MineSweeper game"){
 
   //TODO put in own object
   property("dim must be at least 1x1 and less than sqrt(Int.MaxValue)") = forAll {
@@ -21,9 +21,14 @@ object GameProperties extends Properties("Board"){
     }
   }
 
-//  property("can't have more bombs than tiles") = forAll {
-//    (d: Dim, i: Int) =>
-//      (i >= d.area) ==> Game(d, i).isEmpty
-//  }
+  property("can't have negative bombs") = forAll {
+    (d: Dim, i: Int) =>
+      (i < 0) ==> Game(d, i).isEmpty
+  }
+
+  property("can't have more bombs than tiles") = forAll {
+    (d: Dim, i: Int) =>
+      (i >= d.area) ==> Game(d, i).isEmpty
+  }
 
 }
