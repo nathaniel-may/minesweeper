@@ -67,7 +67,8 @@ object Game {
 
 }
 
-case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Square]) extends MineSweeper(dim: Dim, visible: Map[Square, MSValue]) {
+case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Square])
+  extends MineSweeper(dim: Dim, visible: Map[Square, MSValue]) {
 
   //called when UI receives a click
   def reveal(sq: Square): MineSweeper = {
@@ -87,9 +88,14 @@ case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Sq
         val ns = neighbors(toReveal)
         val bombCount = ns.count(bombs.contains)
         if (bombCount != 0) midFlood.updated(toReveal, NearBombs(bombCount))
-        else ns.foldLeft(midFlood) { (m, sq) => floodReveal(sq, m) }
+        else ns.filterNot(midFlood.contains)
+          .foldLeft(midFlood.updated(toReveal, NearBombs(0))) {
+            (m, sq) => floodReveal(sq, m) }
       }
     }
+
+    //TODO REMOVE
+    println(neighbors(Square(H(0), V(0))).filterNot(visible.contains))
 
     if (bombs.contains(sq)) EndGame(dim, visible.updated(sq, Bomb), Lose)
     else Game(dim, floodReveal(sq, visible), bombs) match {
@@ -100,21 +106,23 @@ case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Sq
 
 }
 
-case class EndGame private (dim: Dim, visible: Map[Square, MSValue], state: GameResult) extends MineSweeper(dim: Dim, visible: Map[Square, MSValue]) {
+case class EndGame private (dim: Dim, visible: Map[Square, MSValue], state: GameResult)
+  extends MineSweeper(dim: Dim, visible: Map[Square, MSValue]) {
   override def toString: String = List(super.toString, state).mkString("\n")
 }
 
 object Play{
 
   def main(args: Array[String]): Unit = {
-    play2x2()
+    play4x4()
   }
 
   def play4x4(): MineSweeper =
     List(Square(0, 0),
       Square(3, 3),
       Square(1, 3),
-      Square(0, 3))
+      Square(0, 3),
+      Square(0, 0))
     .foldLeft[MineSweeper](Game(Dim(4,4), List(Square(2,3), Square(0,2))).get) {
     (game, square) => {val next = takeTurn(game, square); println(s"$next\n"); next} }
 
