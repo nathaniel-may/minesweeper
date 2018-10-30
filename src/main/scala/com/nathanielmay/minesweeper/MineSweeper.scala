@@ -1,5 +1,9 @@
 package com.nathanielmay.minesweeper
 
+import scalaz.State
+
+import scala.util.Random
+
 
 case class H(value: Int)
 case class V(value: Int)
@@ -69,13 +73,19 @@ object Game {
   //standard game creation
   def apply(dim: Dim, bombs: Int): Option[Game] = { //TODO does this need to be an option?
     //quadratic function TODO simplify
-    def randBombs(b: Int): List[Square] =
+    def randBombs(b: Int): List[Square] = {
+      def Rng() = State[Random, Int](r => (r, r.nextInt))
+
       (0 until dim.area).toList.filterNot(
-        List.tabulate(b)(x => (scala.math.random()*(dim.area-x)).toInt)
+      List.tabulate(b)(x => Rng().map(_ * (dim.area - x)))
+        .map(_.eval(Random(1L))) //TODO is this what I want?
         .foldLeft((0 until dim.area).toList)((allSquares, bomb) =>
-          allSquares.splitAt(bomb) match { case (pre, post) => pre ++ post.tail })
+        allSquares.splitAt(bomb) match {
+          case (pre, post) => pre ++ post.tail
+        })
         .toSet)
-        .map(rand => Square(H(rand / dim.h.value), V(rand % dim.h.value)))
+      .map(rand => Square(H(rand / dim.h.value), V(rand % dim.h.value)))
+    }
 
     if (bombs >= dim.area || bombs < 0) None
     else Game(dim, randBombs(bombs))
