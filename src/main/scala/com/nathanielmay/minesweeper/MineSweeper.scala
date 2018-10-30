@@ -1,7 +1,6 @@
 package com.nathanielmay.minesweeper
 
-import Util.rand
-
+import Util.randBombs
 
 case class H(value: Int)
 case class V(value: Int)
@@ -17,7 +16,7 @@ sealed trait Dim {
   def contains(x: V):      Boolean
 }
 
-// forces Dim csae class creation through apply to make illegal states unrepresentable
+// forces Dim case class creation through apply to make illegal states unrepresentable
 object Dim {
 
   def apply(h: H, v: V): Option[Dim] = {
@@ -69,31 +68,14 @@ sealed trait MineSweeper {
 
 object Game {
   //standard game creation
-  def apply(dim: Dim, bombs: Int): Option[Game] = {
-    //quadratic function TODO simplify
-    def randBombs(b: Int): List[Square] = {
-      import scalaz._, Scalaz._, scala.util.Random //TODO move?
-      type Rng[A] = State[(Random, List[A]), A]
-      def rng(n: Int): Rng[Int] =
-        State[(Random, List[Int]), Int] {
-          case (r, l) =>
-            val next = r.nextInt(n)
-            ((r, next :: l), next + l.count(_ < next)) }
-
-      List.tabulate(b)(x => dim.area - x)
-        .traverseS(rng)(new Random(System.currentTimeMillis()), List())._2
-        .map(rand => Square(H(rand / dim.h.value), V(rand % dim.h.value)))
-    }
-
+  def apply(dim: Dim, bombs: Int): Option[Game] =
     if (bombs >= dim.area || bombs < 0) None
-    else Game(dim, randBombs(bombs))
-  }
+    else Game(dim, randBombs(System.currentTimeMillis())(dim, bombs))
 
   //TODO make sure this is usable in tests while private
   def apply(dim: Dim, bombs: List[Square]): Option[Game] =
     if (bombs.forall(dim.contains)) Some(Game(dim, Map(), bombs))
     else None
-
 }
 
 case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Square]) extends MineSweeper {

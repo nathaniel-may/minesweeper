@@ -20,7 +20,7 @@ object Arbitrarily {
 
 private object Generators {
   //generating enormous minesweeper games is expensive and shouldn't be constructed all at once
-  val maxDim = 1000
+  val maxDim = 4
 
   val dimGen: Gen[Dim] = for {
     h <- choose(1, maxDim)
