@@ -1,8 +1,7 @@
 package com.nathanielmay.minesweeper
 
 //scalacheck
-import org.scalacheck.Properties
-import org.scalacheck.Prop.{BooleanOperators, forAll, exists}
+import org.scalacheck.{Properties, Prop}, Prop.{BooleanOperators, forAll, exists}
 
 //testing
 import testingUtil.Arbitrarily.{aDim, aRun}
@@ -35,6 +34,7 @@ object GameProperties extends Properties("MineSweeper game"){
   property("can win a game") = exists {
     run: Run => run.run match {
         case EndGame(_, _, result) => result == Win
+        case _                     => false
       }
   }
 

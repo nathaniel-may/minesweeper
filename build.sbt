@@ -5,5 +5,6 @@ version := "1.0"
 lazy val minesweeper = (project in file("."))
   .settings(
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test",
-    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
+    libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.14.0" % "test",
+    libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.26"
   )

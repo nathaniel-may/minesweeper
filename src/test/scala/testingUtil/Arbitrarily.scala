@@ -1,7 +1,10 @@
 package testingUtil
 
+
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Gen.{choose, oneOf}
+
+import scalaz._, Scalaz._
 
 import com.nathanielmay.minesweeper._
 
@@ -24,21 +27,9 @@ private object Generators {
     v <- if (h == 1) choose(2, maxDim) else choose(1, maxDim)
   } yield Dim(h, v).get
 
-  def genAllSquares(dim: Dim): Gen[List[Square]] = {
-    def go(remaining: List[Square], g: Gen[List[Square]]): Gen[List[Square]] = remaining match {
-      case _ :: _ => for {
-        sq <- oneOf(remaining)
-      } yield go(remaining.filterNot(_ == sq), g.map(l => sq :: l))
-      case Nil => g
-    }
-
-    val allSquares: List[Square] = (for {
-      h <- 0 until dim.h.value
-      v <- 0 until dim.v.value
-    } yield Square(h, v)).toList
-
-    go(allSquares, Gen.const(List()))
-  }
+  def genSquares(dim: Dim): Gen[Stream[Square]] =
+    unfold[Dim, Gen[Square]](dim) { d => (genSquare(d), d).some }
+      .sequence
 
   def genSquare(dim: Dim): Gen[Square] = for {
     h <- choose(0, dim.h.value)
@@ -48,8 +39,16 @@ private object Generators {
   val runGen: Gen[Run] = for {
     dim     <- dimGen
     bombs   <- choose(0, dim.area-1 )
-    game    = Game(dim, bombs).get
-    squares <- genAllSquares(dim)
+    game    =  Game(dim, bombs).get
+    squares <- genSquares(dim)
   } yield Run(game, squares)
+
+  // so that Stream.sequence works
+  implicit val genMonad: Monad[Gen] = GenMonad
+  implicit val appGen: Applicative[Gen] = implicitly[Monad[Gen]]
+  implicit object GenMonad extends Monad[Gen] {
+    def point[A](a: => A): Gen[A] = Gen.const(a)
+    def bind[A, B](ga: Gen[A])(f: A => Gen[B]): Gen[B] = ga flatMap f
+  }
 
 }
