@@ -6,7 +6,7 @@ import scala.util.Random
 
 object Util {
 
-  type Rng[Int] = State[Random, Int]
+  type Rng[A] = State[Random, A]
 
   def Rng(n: Int): Rng[Int] = State[Random, Int](r => (r, r.nextInt(n)))
 

@@ -27,8 +27,9 @@ private object Generators {
     v <- if (h == 1) choose(2, maxDim) else choose(1, maxDim)
   } yield Dim(h, v).get
 
+  // infinite stream of random squares within the dimension
   def genSquares(dim: Dim): Gen[Stream[Square]] =
-    unfold[Dim, Gen[Square]](dim) { d => (genSquare(d), d).some }
+    unfold(dim) { d => (genSquare(d), d).some }
       .sequence
 
   def genSquare(dim: Dim): Gen[Square] = for {

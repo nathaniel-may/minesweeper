@@ -1,6 +1,5 @@
 package com.nathanielmay.minesweeper
 
-
 import Util.rand
 
 
@@ -73,14 +72,16 @@ object Game {
   def apply(dim: Dim, bombs: Int): Option[Game] = {
     //quadratic function TODO simplify
     def randBombs(b: Int): List[Square] = {
+      import scalaz._, Scalaz._, scala.util.Random //TODO move?
+      type Rng[A] = State[(Random, List[A]), A]
+      def rng(n: Int): Rng[Int] =
+        State[(Random, List[Int]), Int] {
+          case (r, l) =>
+            val next = r.nextInt(n)
+            ((r, next :: l), next + l.count(_ < next)) }
 
-      (0 until dim.area).toList.filterNot(
-        rand(b)(x => dim.area - x)
-          .foldLeft((0 until dim.area).toList)((allSquares, bomb) =>
-            allSquares.splitAt(bomb) match {
-              case (pre, post) => pre ++ post.tail
-            })
-          .contains)
+      List.tabulate(b)(x => dim.area - x)
+        .traverseS(rng)(new Random(System.currentTimeMillis()), List())._2
         .map(rand => Square(H(rand / dim.h.value), V(rand % dim.h.value)))
     }
 
