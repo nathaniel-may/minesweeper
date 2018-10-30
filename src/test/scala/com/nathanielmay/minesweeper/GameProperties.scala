@@ -32,11 +32,11 @@ object GameProperties extends Properties("MineSweeper game"){
       (i >= d.area) ==> Game(d, i).isEmpty
   }
 
-  property("can win a game") = exists {
+  property("randomly played games always win or lose") = forAll {
     run: Run => run.run match {
-        case EndGame(_, _, result) => result == Win
-        case _                     => false
-      }
+      case EndGame(_, _, result) => List(Win, Lose).contains(result)
+      case _                     => false
+    }
   }
 
   //TODO put it util testing object

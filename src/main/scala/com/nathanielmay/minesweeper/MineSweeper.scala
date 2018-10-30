@@ -116,37 +116,4 @@ case class EndGame private (dim: Dim, visible: Map[Square, MSValue], state: Game
   override def toString: String = List(super.toString, state).mkString("\n")
 }
 
-//object Play{
-//
-//  def main(args: Array[String]): Unit = {
-//    play4x4()
-//  }
-//
-//  def play4x4(): MineSweeper =
-//    List(Square(0, 0),
-//      Square(3, 3),
-//      Square(1, 3),
-//      Square(0, 3),
-//      Square(0, 0))
-//    .foldLeft[MineSweeper](Game(Dim(4,4), List(Square(2,3), Square(0,2))).get) {
-//    (game, square) => {val next = takeTurn(game, square); println(s"$next\n"); next} }
-//
-//  def play2x2(): Unit = {
-//    val g0 = Game(Dim(2,2), List(Square(0,0))).get
-//    val g1 = takeTurn(g0, Square(1, 0))
-//    val g2 = takeTurn(g1, Square(1, 1))
-//    val g3 = takeTurn(g2, Square(0, 1))
-//    println(List(g0, g1, g2, g3).mkString("", "\n\n", "\n"))
-//  }
-//
-//  def takeTurn(game: MineSweeper, sq: Square): MineSweeper = game match {
-//    case end:  EndGame => end
-//    case game: Game    => game.reveal(sq)
-//  }
-//
-//  implicit def hAble(i: Int): H = H(i)
-//  implicit def vAble(i: Int): V = V(i)
-//
-//}
-
 
