@@ -8,6 +8,7 @@ import testingUtil.Arbitrarily.{aDim, aRun}
 import testingUtil.Util.{Run, TestableGame}
 
 //project
+import Util._
 
 object GameProperties extends Properties("MineSweeper game"){
 
@@ -31,17 +32,19 @@ object GameProperties extends Properties("MineSweeper game"){
       (i >= d.area) ==> Game(d, i).isEmpty
   }
 
-//  property("can win a game") = exists {
-//    run: Run => run.run match {
-//        case EndGame(_, _, result) => result == Win
-//        case _                     => false
-//      }
-//  }
+  property("can win a game") = exists {
+    run: Run => run.run match {
+        case EndGame(_, _, result) => result == Win
+        case _                     => false
+      }
+  }
 
   //TODO put it util testing object
   property("randBombs should always generate within the dimension") = forAll {
     (seed: Long, b: Int, d: Dim) =>
       (b >= 0 && b < d.area) ==> Util.randBombs(seed)(d, b).forall(d.contains)
   }
+
+  //TODO property for randBombs can generate bombs in the full range of tiles
 
 }

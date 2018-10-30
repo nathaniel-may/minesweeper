@@ -8,7 +8,8 @@ object Util {
   implicit def vAble(i: Int): V = V(i)
 
   case class Run(game: Game, squares: Stream[Square]) {
-    lazy val run: MineSweeper = game.revealAll(squares)
+    val run: MineSweeper = game.revealAll(squares)
+    override def toString: String = List("", run, squares).mkString("\n")
   }
 
   object TestableGame {

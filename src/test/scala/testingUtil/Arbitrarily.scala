@@ -2,7 +2,7 @@ package testingUtil
 
 
 import org.scalacheck.{Arbitrary, Gen}
-import org.scalacheck.Gen.{choose, oneOf}
+import org.scalacheck.Gen.{choose, pick}
 
 import scalaz._, Scalaz._
 
@@ -27,10 +27,13 @@ private object Generators {
     v <- if (h == 1) choose(2, maxDim) else choose(1, maxDim)
   } yield Dim(h, v).get
 
-  // infinite stream of random squares within the dimension
   def genSquares(dim: Dim): Gen[Stream[Square]] =
-    unfold(dim) { d => (genSquare(d), d).some }
-      .sequence
+    pick(dim.area, allSquares(dim)).map(_.toStream)
+
+  def allSquares(dim: Dim): List[Square] = (for {
+    h <- 0 until dim.h.value
+    v <- 0 until dim.v.value
+  } yield Square(H(h), V(v))).toList
 
   def genSquare(dim: Dim): Gen[Square] = for {
     h <- choose(0, dim.h.value)
