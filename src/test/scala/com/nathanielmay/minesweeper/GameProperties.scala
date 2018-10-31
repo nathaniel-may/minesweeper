@@ -8,7 +8,7 @@ import testingUtil.Arbitrarily.{aDim, aRun}
 import testingUtil.Util.{Run, TestableGame}
 
 //project
-import Util.randBombs
+import MineSweeper.randBombs
 
 object GameProperties extends Properties("MineSweeper game"){
 

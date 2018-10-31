@@ -1,7 +1,5 @@
 package com.nathanielmay.minesweeper
 
-import Util.randBombs
-
 case class Square(h: H, v: V)
 
 //sum type to disambiguate boolean flags
@@ -33,11 +31,31 @@ sealed trait MineSweeper {
       .mkString("\n")
 }
 
+object MineSweeper{
+  import scala.util.Random
+  import scalaz._, Scalaz._
+
+  def indexToSquare(dim: Dim)(i: Int): Square =
+    Square(H(i / dim.v.value), V(i % dim.v.value))
+
+  def specialRng(n: Int): State[(Random, List[Int]), Int] =
+    State[(Random, List[Int]), Int] {
+      case (r, l) =>
+        val nextRaw = r.nextInt(n)
+        val next    = nextRaw + l.count(_ <= nextRaw)
+        ((r, next :: l), next ) }
+
+  def randBombs(seed: Long)(dim: Dim, b: Int): List[Square] =
+    List.tabulate(b)(x => dim.area - x)
+      .traverseS(specialRng)(new Random(seed), List())._2
+      .map(indexToSquare(dim))
+}
+
 object Game {
   //standard game creation
   def apply(dim: Dim, bombs: Int): Option[Game] =
     if (bombs >= dim.area || bombs < 0) None
-    else Game(dim, randBombs(System.currentTimeMillis())(dim, bombs))
+    else Game(dim, MineSweeper.randBombs(System.currentTimeMillis())(dim, bombs))
 
   private def apply(dim: Dim, bombs: List[Square]): Option[Game] =
     if (bombs.forall(dim.contains)) Some(Game(dim, Map(), bombs))
