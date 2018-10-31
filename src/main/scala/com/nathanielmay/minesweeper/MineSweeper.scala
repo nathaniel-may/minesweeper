@@ -1,5 +1,8 @@
 package com.nathanielmay.minesweeper
 
+import MineSweeper.{hToInt, vToInt}
+
+
 case class Square(h: H, v: V)
 
 //sum type to disambiguate boolean flags
@@ -25,8 +28,8 @@ sealed trait MineSweeper {
   val visible: Map[Square, MSValue]
 
   override def toString: String =
-    (0 until dim.v.value).toList
-      .map(v => (0 until dim.h.value).toList.map(h => Square(H(h), V(v))))
+    (0 until dim.v).toList
+      .map(v => (0 until dim.h).toList.map(h => Square(H(h), V(v))))
       .map(row => row.map(visible.getOrElse(_, " ").toString).mkString("|","|","|"))
       .mkString("\n")
 }
@@ -36,7 +39,7 @@ object MineSweeper{
   import scalaz._, Scalaz._
 
   def indexToSquare(dim: Dim)(i: Int): Square =
-    Square(H(i / dim.v.value), V(i % dim.v.value))
+    Square(H(i / dim.v), V(i % dim.v))
 
   def specialRng(n: Int): State[(Random, List[Int]), Int] =
     State[(Random, List[Int]), Int] {
@@ -49,6 +52,9 @@ object MineSweeper{
     List.tabulate(b)(x => dim.area - x)
       .traverseS(specialRng)(new Random(seed), List())._2
       .map(indexToSquare(dim))
+
+  implicit def hToInt(h: H): Int = h.value
+  implicit def vToInt(v: V): Int = v.value
 }
 
 object Game {
@@ -70,7 +76,7 @@ case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Sq
         hDiff <- -1 to 1
         vDiff <- -1 to 1
         if !(hDiff == 0 && vDiff == 0)
-        neighbor = Square(H(square.h.value + hDiff), V(square.v.value + vDiff))
+        neighbor = Square(H(square.h + hDiff), V(square.v + vDiff))
         if dim.contains(neighbor)
       } yield neighbor).toList
 
