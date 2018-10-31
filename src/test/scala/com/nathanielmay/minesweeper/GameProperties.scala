@@ -8,19 +8,9 @@ import testingUtil.Arbitrarily.{aDim, aRun}
 import testingUtil.Util.{Run, TestableGame}
 
 //project
-import Util._
+import Util.randBombs
 
 object GameProperties extends Properties("MineSweeper game"){
-
-  //TODO put in own object
-  property("dim must be at least 1x1 and less than sqrt(Int.MaxValue)") = forAll {
-    (dh: Int, dv: Int) => (dh, dv) match {
-      case (h, v) =>
-        if (List(h, v, h*v).exists(_ < 1) || List(h, v).exists(_ > scala.math.sqrt(Int.MaxValue)))
-          Dim(H(h), V(v)).isEmpty
-        else Dim(H(h), V(v)).isDefined
-    }
-  }
 
   property("can't have negative bombs") = forAll {
     (d: Dim, i: Int) =>
@@ -40,9 +30,9 @@ object GameProperties extends Properties("MineSweeper game"){
   }
 
   //TODO put it util testing object
-  property("randBombs should always generate within the dimension") = forAll {
+  property("randBombs always generates within the dimension") = forAll {
     (seed: Long, b: Int, d: Dim) =>
-      (b >= 0 && b < d.area) ==> Util.randBombs(seed)(d, b).forall(d.contains)
+      (b >= 0 && b < d.area) ==> randBombs(seed)(d, b).forall(d.contains)
   }
 
   //TODO property for randBombs can generate bombs in the full range of tiles
