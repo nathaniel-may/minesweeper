@@ -19,8 +19,9 @@ object Arbitrarily {
 }
 
 private object Generators {
-  //generating enormous minesweeper games is expensive and shouldn't be constructed all at once
-  val maxDim = 4
+  //generating enormous minesweeper games takes forever to test
+  //TODO testing with maxDim >= 100 => stackoverflow
+  val maxDim = 50
 
   val dimGen: Gen[Dim] = for {
     h <- choose(1, maxDim)
