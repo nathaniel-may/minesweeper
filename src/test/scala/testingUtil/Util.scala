@@ -13,6 +13,7 @@ object Util {
   }
 
   object TestableGame {
+    // explicitly tail recursive here rather than defining in class
     def revealAll(game: MineSweeper, turns: Stream[Square]): MineSweeper = game match {
       case end:  EndGame => end
       case game: Game    => turns match {

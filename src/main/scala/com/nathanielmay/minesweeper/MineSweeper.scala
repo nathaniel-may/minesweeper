@@ -80,7 +80,7 @@ case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Sq
         if dim.contains(neighbor)
       } yield neighbor).toList
 
-    //recursive function for when a zero is clicked
+    //recurses when a zero is clicked
     //TODO can I avoid calling neighbors(toReveal) twice without a val?
     def floodReveal(toReveal: Square, midFlood: Map[Square, MSValue]): Map[Square, MSValue] = {
       NearBombs(neighbors(toReveal).count(bombs.contains)) match {
