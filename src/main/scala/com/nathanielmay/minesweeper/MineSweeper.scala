@@ -49,9 +49,10 @@ object MineSweeper{
         ((r, next :: l), next ) }
 
   def randBombs(seed: Long)(dim: Dim, b: Int): List[Square] =
-    List.tabulate(b)(x => dim.area - x)
-      .traverseS(specialRng)(new Random(seed), List())._2
-      .map(indexToSquare(dim))
+    Util.shuffle[Boolean](seed)(List.fill(b)(true) ::: List.fill(dim.area - b)(false))
+    .zipWithIndex
+    .flatMap { case (true, i) => Some(indexToSquare(dim)(i))
+               case _         => None }
 
   implicit def hToInt(h: H): Int = h.value
   implicit def vToInt(v: V): Int = v.value
