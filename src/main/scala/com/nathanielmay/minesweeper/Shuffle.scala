@@ -36,8 +36,6 @@ object Shuffle {
   private type RandStream[A] = State[Random, Stream[A]]
 
   def shuffle[A](seed: Long)(s: Stream[A]): Stream[A] = shuffleLength(s).eval(new Random(seed))._1
-  def fs2Shuffle[A](seed: Long)(s: fs2.Stream[fs2.Pure, A]): fs2.Stream[fs2.Pure, A] = shuffleLength(s).eval(new Random(seed))._1
-
 
   private def halve[A](s: Stream[A]): (Stream[A], Stream[A]) = s match {
     case Empty    => (Empty, Empty)
