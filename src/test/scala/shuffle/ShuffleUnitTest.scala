@@ -1,8 +1,10 @@
-package com.nathanielmay.minesweeper
+package shuffle
 
 import org.scalatest._
-import scalaz.Scalaz, Scalaz._ //unfold
-import Shuffle.shuffle
+import scalaz.Scalaz
+import scalaz.Scalaz._
+import shuffle.Shuffle.shuffle
+
 import scala.math.abs
 
 

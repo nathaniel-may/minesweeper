@@ -1,6 +1,7 @@
 package com.nathanielmay.minesweeper
 
 import MineSweeper.{hToInt, vToInt}
+import shuffle.Shuffle
 
 
 case class Square(h: H, v: V)

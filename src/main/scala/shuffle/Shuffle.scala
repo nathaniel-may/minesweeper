@@ -1,10 +1,10 @@
-package com.nathanielmay.minesweeper
+package shuffle
 
-import scala.util.Random
 import scalaz.State
 
-import Stream.Empty
+import scala.Stream.Empty
 import scala.collection.mutable
+import scala.util.Random
 
 object Shuffle {
 
@@ -31,18 +31,18 @@ object Shuffle {
     println(pretty(rngMap))
   }
 
-  private type RandStreamLen[A] = State[Random, (Stream[A], Int)]
-  private type RNG = State[Random, Int]
-  private type RandStream[A] = State[Random, Stream[A]]
+  private[shuffle] type RandStreamLen[A] = State[Random, (Stream[A], Int)]
+  private[shuffle] type RNG = State[Random, Int]
+  private[shuffle] type RandStream[A] = State[Random, Stream[A]]
 
   def shuffle[A](seed: Long)(s: Stream[A]): Stream[A] = shuffleLength(s).eval(new Random(seed))._1
 
-  private def halve[A](s: Stream[A]): (Stream[A], Stream[A]) = s match {
+  private[shuffle] def halve[A](s: Stream[A]): (Stream[A], Stream[A]) = s match {
     case Empty    => (Empty, Empty)
     case z #:: zs => halve(zs) match { case (xs, ys) => (z #:: ys, xs) }
   }
 
-  private def shuffleLength[A](s: Stream[A]): RandStreamLen[A] = s match {
+  private[shuffle] def shuffleLength[A](s: Stream[A]): RandStreamLen[A] = s match {
     case Empty       => State[Random, (Stream[A], Int)](r => (r, (Empty,     0)))
     case x #:: Empty => State[Random, (Stream[A], Int)](r => (r, (Stream(x), 1)))
     case _ #:: _     => halve(s) match { case (lHalf, rHalf) => for {
@@ -53,7 +53,7 @@ object Shuffle {
     } yield (shuffled, lSize + rSize) }
   }
 
-  private def riffle[A](l: (Stream[A], Int), r: (Stream[A], Int)): RandStream[A] = (l, r) match {
+  private[shuffle] def riffle[A](l: (Stream[A], Int), r: (Stream[A], Int)): RandStream[A] = (l, r) match {
     case ((xs,       _ ), (Empty,    _ )) => State[Random, Stream[A]]((_, xs))
     case ((Empty,    _ ), (ys,       _ )) => State[Random, Stream[A]]((_, ys)) //TODO where is unit?
     case ((x #:: xs, nx), (y #:: ys, ny)) => rng(below = nx+ny).flatMap { k =>
