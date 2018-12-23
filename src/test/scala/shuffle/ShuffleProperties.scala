@@ -2,9 +2,11 @@ package shuffle
 
 //scalacheck
 import org.scalacheck.Prop.forAll
-import org.scalacheck.{Prop, Properties, Gen}, Gen.choose
+import org.scalacheck.{Properties, Gen}, Gen.choose
+import scalaz._, Scalaz._
 
-//scala
+//Scala
+import scala.util.Random
 
 //project
 import shuffle.Shuffle.shuffle
@@ -14,7 +16,10 @@ import shuffle.Shuffle.shuffle
 object ShuffleProperties extends Properties("shuffle") {
 
   property("results in exactly the same elements") = forAll {
-    (s: Stream[Int], seed: Long) => frequencyMap(shuffle(seed)(s).toList) == frequencyMap(s.toList)
+    (s: Stream[Int], seed: Long) => (for { //frequencyMap(shuffle(s).toList) == frequencyMap(s.toList)
+      rand <- shuffle(s)
+    } yield frequencyMap(rand.toList) == frequencyMap(s.toList))
+    .eval(new Random(seed))
   }
 
   property("halves a stream") = forAll {
@@ -23,7 +28,7 @@ object ShuffleProperties extends Properties("shuffle") {
 
   property("riffle maintains exactly the same elements") = forAll {
     (s1: Stream[Int], s2: Stream[Int], seed: Long) =>
-      arePartitions(Shuffle.riffle((s1, s1.length), (s2, s2.length)).eval(new scala.util.Random(seed))
+      arePartitions(Shuffle.riffle((s1, s1.length), (s2, s2.length)).eval(new Random(seed))
         .foldLeft[List[Int]](List()) { (b, a) => a :: b })(s1.toList, s2.toList)
   }
 
@@ -36,6 +41,15 @@ object ShuffleProperties extends Properties("shuffle") {
 
   property("rng(below: Int <= 0) is always zero") = forAll(choose(Int.MinValue, 0), choose(Long.MinValue, Long.MaxValue)) {
     (below: Int, seed: Long) => Shuffle.rng(below).eval(new scala.util.Random(seed)).intValue == 0
+  }
+
+  property("riffling two single item lists isn't always the same") = forAll {
+    seed: Long => List.fill(10)(Shuffle.riffle((Stream("A"), 1), (Stream("B"), 1)))
+      .sequence
+      .map { _.map { _.head } }
+      .map(frequencyMap)
+      .map { !_.values.exists(_ == 0) }
+      .eval(new scala.util.Random(seed)).booleanValue
   }
 
   def arePartitions[T](full: List[T])(ls: List[T]*): Boolean =

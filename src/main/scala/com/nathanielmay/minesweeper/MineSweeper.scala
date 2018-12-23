@@ -2,6 +2,7 @@ package com.nathanielmay.minesweeper
 
 import MineSweeper.{hToInt, vToInt}
 import shuffle.Shuffle
+import shuffle.Shuffle.Rand
 
 
 case class Square(h: H, v: V)
@@ -20,7 +21,7 @@ case class NearBombs(n: Int) extends MSValue{
 
 //sum type for win/lose. Wrap in Option for games not won or lost yet
 sealed trait GameResult
-case object Win extends GameResult
+case object Win  extends GameResult
 case object Lose extends GameResult
 
 //awkward construction until traits can take params: https://docs.scala-lang.org/sips/trait-parameters.html
@@ -37,7 +38,8 @@ sealed trait MineSweeper {
 
 object MineSweeper{
   import scala.util.Random
-  import scalaz._, Scalaz._
+  import Shuffle.shuffle
+  import scalaz._
 
   def indexToSquare(dim: Dim)(i: Int): Square =
     Square(H(i / dim.v), V(i % dim.v))
@@ -49,12 +51,11 @@ object MineSweeper{
         val next    = nextRaw + l.count(_ <= nextRaw)
         ((r, next :: l), next ) }
 
-  def randBombs(seed: Long)(dim: Dim, b: Int): List[Square] =
-    Shuffle.shuffle[Boolean](seed)(Stream.fill(b)(true) #::: Stream.fill(dim.area - b)(false))
-    .zipWithIndex
-    .flatMap { case (true, i) => Some(indexToSquare(dim)(i))
-               case _         => None }
-    .toList
+  def randBombs(dim: Dim, b: Int): Rand[List[Square]] = for {
+    stream  <- shuffle[Boolean](Stream.fill(b)(true) #::: Stream.fill(dim.area - b)(false))
+    bombs   =  stream.zipWithIndex.filter(_._1).map(_._2)
+    squares =  bombs.map(indexToSquare(dim)).toList
+  } yield squares
 
   implicit def hToInt(h: H): Int = h.value
   implicit def vToInt(v: V): Int = v.value
@@ -64,7 +65,9 @@ object Game {
   //standard game creation
   def apply(dim: Dim, bombs: Int): Option[Game] =
     if (bombs >= dim.area || bombs < 0) None
-    else Game(dim, MineSweeper.randBombs(System.currentTimeMillis())(dim, bombs))
+    else MineSweeper.randBombs(dim, bombs)
+      .map { Game(dim, _) }
+      .eval(new java.util.Random(System.nanoTime()))
 
   private def apply(dim: Dim, bombs: List[Square]): Option[Game] =
     if (bombs.forall(dim.contains)) Some(Game(dim, Map(), bombs))

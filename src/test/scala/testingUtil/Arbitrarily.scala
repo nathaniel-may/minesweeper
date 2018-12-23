@@ -48,22 +48,12 @@ private object Generators {
     squares <- genSquares(dim)
   } yield Run(game, squares)
 
-  //TODO
-//  val int2To7: Gen[Int] = choose(2, 7)
-//
-//  def unshuffledGen(samples: Int, size: Int): Gen[List[Stream[(Long, Int)]]] =
-//    List.fill(samples)(sampleGen(size)).sequence
-//
-//  def sampleGen(size: Int): Gen[Stream[(Long, Int)]] =
-//    Stream.fill(size)(Gen.posNum[Int]).sequence
-//      .map { s => s.map { n => (System.currentTimeMillis(), n) } }
-
-  // so that Stream.sequence works
-  implicit val genMonad: Monad[Gen] = GenMonad
-  implicit val appGen: Applicative[Gen] = implicitly[Monad[Gen]]
-  implicit object GenMonad extends Monad[Gen] {
-    def point[A](a: => A): Gen[A] = Gen.const(a)
-    def bind[A, B](ga: Gen[A])(f: A => Gen[B]): Gen[B] = ga flatMap f
-  }
+  // so that sequence works TODO I never use it.
+//  implicit val genMonad: Monad[Gen] = GenMonad
+//  implicit val appGen: Applicative[Gen] = implicitly[Monad[Gen]]
+//  implicit object GenMonad extends Monad[Gen] {
+//    def point[A](a: => A): Gen[A] = Gen.const(a)
+//    def bind[A, B](ga: Gen[A])(f: A => Gen[B]): Gen[B] = ga flatMap f
+//  }
 
 }

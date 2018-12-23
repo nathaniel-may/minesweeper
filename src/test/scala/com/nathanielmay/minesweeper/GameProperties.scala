@@ -1,7 +1,7 @@
 package com.nathanielmay.minesweeper
 
 //scalacheck
-import org.scalacheck.{Properties, Prop}, Prop.{BooleanOperators, forAll, exists}
+import org.scalacheck.{Properties, Prop, Gen}, Prop.{BooleanOperators, forAll}, Gen.choose
 
 //testing
 import testingUtil.Arbitrarily.{aDim, aRun}
@@ -23,16 +23,15 @@ object GameProperties extends Properties("MineSweeper game"){
   }
 
   property("randomly played games always win or lose") = forAll {
-    run: Run => run.run match {
-      case EndGame(_, _, result) => List(Win, Lose).contains(result)
-      case _                     => false
-    }
+    run: Run => run.run match { case _: EndGame => true }
   }
 
   //TODO put it util testing object
   property("randBombs always generates within the dimension") = forAll {
     (seed: Long, b: Int, d: Dim) =>
-      (b >= 0 && b < d.area) ==> randBombs(seed)(d, b).forall(d.contains)
+      (b >= 0 && b < d.area) ==> (for {
+      bombs <- randBombs(d, b)
+    } yield bombs.forall(d.contains)).eval(new java.util.Random(seed))
   }
 
   //TODO property for randBombs can generate bombs in the full range of tiles
