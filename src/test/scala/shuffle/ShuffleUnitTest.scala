@@ -38,6 +38,6 @@ class ShuffleUnitTest extends FlatSpec with Matchers {
 
   def notWithin(goal: Double, tol: Double)(value: Int): Boolean = !within(goal, tol)(value)
 
-  def factorial(n: Long): Long = (2L to n).product //TODO there must be a library function for this that uses BigDecimal
+  def factorial(n: Long): Long = (2L to n).product //TODO use library fn
 
 }
