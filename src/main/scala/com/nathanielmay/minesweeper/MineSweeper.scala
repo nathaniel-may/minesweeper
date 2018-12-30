@@ -67,7 +67,7 @@ object Game {
     if (bombs >= dim.area || bombs < 0) None
     else MineSweeper.randBombs(dim, bombs)
       .map { Game(dim, _) }
-      .eval(new java.util.Random(System.nanoTime()))
+      .eval(new scala.util.Random(System.nanoTime()))
 
   private def apply(dim: Dim, bombs: List[Square]): Option[Game] =
     if (bombs.forall(dim.contains)) Some(Game(dim, Map(), bombs))
