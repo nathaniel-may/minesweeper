@@ -12,7 +12,6 @@ import scala.util.Random
 import shuffle.Shuffle.shuffle
 
 
-
 object ShuffleProperties extends Properties("shuffle") {
 
   property("results in exactly the same elements") = forAll {
