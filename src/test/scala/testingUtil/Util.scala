@@ -1,6 +1,6 @@
 package testingUtil
 
-import com.nathanielmay.minesweeper.{H, MineSweeper, Game, EndGame, Square, V}
+import com.nathanielmay.minesweeper.{H, V, Square, MineSweeper, Game, EndGame}
 
 object Util {
 
