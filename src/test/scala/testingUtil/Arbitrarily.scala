@@ -20,8 +20,8 @@ object Arbitrarily {
 
 private object Generators {
   //generating enormous minesweeper games takes forever to test
-  //TODO testing with maxDim >= 100 => stackoverflow
-  val maxDim = 50
+  //values too high can cause stackoverflow
+  val maxDim = 20
 
   val dimGen: Gen[Dim] = for {
     h <- choose(1, maxDim)

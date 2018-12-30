@@ -22,17 +22,20 @@ object GameProperties extends Properties("MineSweeper game"){
       (i >= d.area) ==> Game(d, i).isEmpty
   }
 
-//  property("randomly played games always win or lose") = forAll {
-//    run: Run => run.run match { case _: EndGame => true }
-//  }
+  property("randomly played games always win or lose") = forAll {
+    run: Run => run.run match {
+      case _: EndGame => true
+      case _          => false
+    }
+  }
 
-//  //TODO put it util testing object
-//  property("randBombs always generates within the dimension") = forAll {
-//    (seed: Long, b: Int, d: Dim) =>
-//      (b >= 0 && b < d.area) ==> (for {
-//      bombs <- randBombs(d, b)
-//    } yield bombs.forall(d.contains)).eval(new java.util.Random(seed))
-//  }
+  //TODO put it util testing object
+  property("randBombs always generates within the dimension") = forAll {
+    (seed: Long, b: Int, d: Dim) =>
+      (b >= 0 && b < d.area) ==> (for {
+      bombs <- randBombs(d, b)
+    } yield bombs.forall(d.contains)).eval(new java.util.Random(seed))
+  }
 
   //TODO property for randBombs can generate bombs in the full range of tiles
 
