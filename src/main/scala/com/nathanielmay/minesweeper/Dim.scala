@@ -1,9 +1,11 @@
 package com.nathanielmay.minesweeper
 
-case class H(value: Int)
-case class V(value: Int)
+import Dim.{H, V}
 
 object Dim {
+  case class H(value: Int)
+  case class V(value: Int)
+
   def apply(h: H, v: V): Option[Dim] = {
     val max = scala.math.sqrt(Int.MaxValue).toInt // area val cannot hit Int overflow
     if (h.value <= 0 || v.value <= 0 || h.value > max || v.value > max) None

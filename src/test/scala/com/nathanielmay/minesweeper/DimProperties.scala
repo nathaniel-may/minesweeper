@@ -1,6 +1,7 @@
 package com.nathanielmay.minesweeper
 
 import org.scalacheck.{Properties, Prop, Gen}, Prop.{BooleanOperators, forAll}
+import Dim.{H, V}
 
 object DimProperties extends Properties("MineSweeper game") {
 

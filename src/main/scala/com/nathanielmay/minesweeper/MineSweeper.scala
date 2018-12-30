@@ -1,8 +1,8 @@
 package com.nathanielmay.minesweeper
 
 import MineSweeper.{hToInt, vToInt}
-import shuffle.Shuffle
-import shuffle.Shuffle.Rand
+import Dim.{H, V}
+import shuffle.Shuffle, Shuffle.Rand
 
 
 case class Square(h: H, v: V)

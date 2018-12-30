@@ -5,7 +5,7 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Gen.{choose, pick}
 
 // project
-import com.nathanielmay.minesweeper._
+import com.nathanielmay.minesweeper._, Dim.{H, V}
 import testingUtil.Util.{hAble, vAble, Run}
 
 object Arbitrarily {
