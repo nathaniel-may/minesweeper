@@ -4,7 +4,7 @@ package com.nathanielmay.minesweeper
 import org.scalacheck.{Properties, Prop, Gen}, Prop.{BooleanOperators, forAll}, Gen.choose
 
 //testing
-import testingUtil.Arbitrarily.{aDim, aRun}
+import testingUtil.Arbitrarily.{aDim, getDimGen, aRun}
 import testingUtil.Util.{Run, TestableGame}
 
 //project
@@ -29,7 +29,6 @@ object GameProperties extends Properties("MineSweeper game"){
     }
   }
 
-  //TODO put it util testing object
   property("randBombs always generates within the dimension") = forAll {
     (seed: Long, b: Int, d: Dim) =>
       (b >= 0 && b < d.area) ==> (for {
@@ -37,6 +36,16 @@ object GameProperties extends Properties("MineSweeper game"){
     } yield bombs.forall(d.contains)).eval(new java.util.Random(seed))
   }
 
-  //TODO property for randBombs can generate bombs in the full range of tiles
+  //TODO not a pure property
+  property("randBombs generates bombs in the full range of tiles") = forAll(getDimGen(7)) {
+    (dim: Dim) => {
+      val bombs: Int = scala.math.ceil(dim.area / 5.0).toInt
+
+      Stream.fill(dim.area * dim.area / bombs)(randBombs(dim, bombs))
+        .foldLeft[Set[Square]](Set()) { (l, rand) =>
+          rand.eval(new scala.util.Random(System.nanoTime())).toSet ++ l }
+        .size == dim.area
+    }
+  }
 
 }
