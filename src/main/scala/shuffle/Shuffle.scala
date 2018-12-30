@@ -7,8 +7,6 @@ import scala.util.Random
 object Shuffle {
   type Rand[A] = State[Random, A]
 
-  //def shuffle[A](seed: Long)(s: Stream[A]): Stream[A] = shuffleLength(s).eval(new Random(seed))._1
-
   def shuffle[A](s: Stream[A]): Rand[Stream[A]] = shuffleLength(s).map(_._1)
 
   private[shuffle] def halve[A](s: Stream[A]): (Stream[A], Stream[A]) = s match {
