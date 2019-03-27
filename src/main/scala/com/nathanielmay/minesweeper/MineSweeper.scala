@@ -2,7 +2,7 @@ package com.nathanielmay.minesweeper
 
 import MineSweeper.{hToInt, vToInt}
 import Dim.{H, V}
-import shuffle.Shuffle, Shuffle.Rand
+import shuffle.FunctionalShuffle, FunctionalShuffle.Rand
 
 
 case class Square(h: H, v: V)
@@ -37,9 +37,9 @@ sealed trait MineSweeper {
 }
 
 object MineSweeper{
+  import FunctionalShuffle.shuffle
   import scala.util.Random
-  import Shuffle.shuffle
-  import scalaz._
+  import scalaz.State
 
   def indexToSquare(dim: Dim)(i: Int): Square =
     Square(H(i / dim.v), V(i % dim.v))
@@ -104,7 +104,6 @@ case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Sq
       case g: Game => g
     }
   }
-
 }
 
 case class EndGame private (dim: Dim, visible: Map[Square, MSValue], state: GameResult) extends MineSweeper {

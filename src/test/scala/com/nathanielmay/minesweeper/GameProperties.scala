@@ -15,7 +15,7 @@ object GameProperties extends Properties("MineSweeper game") {
 
   property("can't have negative bombs") = forAll {
     (d: Dim, i: Int) =>
-      (i < 0) ==> Game(d, i).isEmpty
+      (i < 1) ==> Game(d, i).isEmpty
   }
 
   property("can't have more bombs than tiles") = forAll {
