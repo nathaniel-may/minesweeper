@@ -42,7 +42,7 @@ private object Generators {
 
   def runGen(maxDim: Int): Gen[Run] = for {
     dim     <- dimGen(maxDim)
-    bombs   <- choose(0, dim.area-1 )
+    bombs   <- choose(2, dim.area-1 )
     game    =  Game(dim, bombs).get
     squares <- genSquares(dim)
   } yield Run(game, squares)

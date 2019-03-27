@@ -13,7 +13,7 @@ import MineSweeper.randBombs
 
 object GameProperties extends Properties("MineSweeper game") {
 
-  property("can't have negative bombs") = forAll {
+  property("must have more than one bomb") = forAll {
     (d: Dim, i: Int) =>
       (i < 1) ==> Game(d, i).isEmpty
   }
