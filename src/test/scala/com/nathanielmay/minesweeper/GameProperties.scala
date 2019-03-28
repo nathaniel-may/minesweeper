@@ -8,6 +8,7 @@ import scalaz.Scalaz.unfold
 
 // project
 import testingUtil.Arbitrarily.{aDim, getDimGen, aRun}
+import testingUtil.Generators.badInputGen
 import testingUtil.Util.Run
 import MineSweeper.randBombs
 
@@ -35,6 +36,12 @@ object GameProperties extends Properties("MineSweeper game") {
       (b >= 0 && b < d.area) ==> (for {
       bombs <- randBombs(d, b)
     } yield bombs.forall(d.contains)).eval(new java.util.Random(seed))
+  }
+
+  property("with bombs specified outside the dimension are rejected") = forAll(badInputGen) {
+    (bad: (Dim, List[Square])) =>
+      val (dim, bombs) = bad
+      Game(dim, bombs).isEmpty
   }
 
   property("randBombs generates bombs in the full range of tiles") = forAll(choose(Long.MinValue, Long.MaxValue), getDimGen(7)) {

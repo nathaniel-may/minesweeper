@@ -69,7 +69,7 @@ object Game {
       .map { Game(dim, _) }
       .eval(new scala.util.Random(System.nanoTime()))
 
-  private def apply(dim: Dim, bombs: List[Square]): Option[Game] =
+  private[minesweeper] def apply(dim: Dim, bombs: List[Square]): Option[Game] =
     if (bombs.forall(dim.contains)) Some(Game(dim, Map(), bombs))
     else None
 }
