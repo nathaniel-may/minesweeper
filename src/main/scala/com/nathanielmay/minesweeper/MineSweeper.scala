@@ -38,8 +38,6 @@ sealed trait MineSweeper {
 
 object MineSweeper{
   import FunctionalShuffle.shuffle
-  import scala.util.Random
-  import scalaz.State
 
   def indexToSquare(dim: Dim)(i: Int): Square =
     Square(H(i / dim.v), V(i % dim.v))
