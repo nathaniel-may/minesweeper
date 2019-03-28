@@ -44,13 +44,6 @@ object MineSweeper{
   def indexToSquare(dim: Dim)(i: Int): Square =
     Square(H(i / dim.v), V(i % dim.v))
 
-  def specialRng(n: Int): State[(Random, List[Int]), Int] =
-    State[(Random, List[Int]), Int] {
-      case (r, l) =>
-        val nextRaw = r.nextInt(n)
-        val next    = nextRaw + l.count(_ <= nextRaw)
-        ((r, next :: l), next ) }
-
   def randBombs(dim: Dim, b: Int): Rand[List[Square]] = for {
     stream  <- shuffle[Boolean](Stream.fill(b)(true) #::: Stream.fill(dim.area - b)(false))
     bombs   =  stream.zipWithIndex.filter(_._1).map(_._2)
