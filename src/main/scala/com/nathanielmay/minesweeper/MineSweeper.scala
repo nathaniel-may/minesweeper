@@ -64,7 +64,7 @@ object MineSweeper{
 object Game {
   //standard game creation
   def apply(dim: Dim, bombs: Int): Option[Game] =
-    if (bombs >= dim.area || bombs <= 1) None
+    if (bombs >= dim.area || bombs < 1) None
     else MineSweeper.randBombs(dim, bombs)
       .map { Game(dim, _) }
       .eval(new scala.util.Random(System.nanoTime()))
