@@ -60,7 +60,7 @@ object ActiveGame {
       .eval(new scala.util.Random(System.nanoTime()))
 
   private[minesweeper] def apply(dim: Dim, visible: Map[Square, MSValue], bombs: List[Square]): Option[MineSweeper] =
-    if (bombs.map(dim.contains).exists(!_))
+    if (bombs.map(dim.contains).exists(!_) || bombs.isEmpty || visible.values.toStream.contains(Bomb))
       None
     else if (visible.values.toStream.contains(Bomb))
       Some(FinalGame(dim, visible, Lose))

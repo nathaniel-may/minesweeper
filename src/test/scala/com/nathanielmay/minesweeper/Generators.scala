@@ -28,6 +28,11 @@ object Generators {
     v <- choose(0, dim.v.value)
   } yield Square(h, v)
 
+  def squareGen(maxDim: Int): Gen[Square] = for {
+    dim <- dimGen(maxDim)
+    sq  <- squareGen(dim)
+  } yield sq
+
   def badSquareGen(dim: Dim): Gen[Square] =
     Gen.oneOf(List(
       Square(dim.h+1, dim.v+1),

@@ -17,6 +17,7 @@ object MineSweeperProperties extends Properties("A MineSweeper game") {
   val maxDim = 20
   implicit val aDim: Arbitrary[Dim] = Arbitrary(dimGen(maxDim))
   implicit val aRun: Arbitrary[Run] = Arbitrary(runGen(maxDim))
+  implicit val aSquare: Arbitrary[Square] = Arbitrary(squareGen(maxDim))
 
   property("must have more than one bomb") = forAll {
     (d: Dim, i: Int) =>
@@ -79,12 +80,23 @@ object MineSweeperProperties extends Properties("A MineSweeper game") {
       }
   }
 
-  property("ActiveGame constructor works") = forAll {
+  property("ActiveGame public constructor works") = forAll {
     (dim: Dim, bombs: Int) =>
       ActiveGame(dim, bombs) match {
         case None    => bombs <= 0 || bombs >= dim.area
-        case Some(_) => bombs >  0 && bombs < dim.area
+        case Some(_) => bombs >  0 && bombs <  dim.area
       }
+  }
+
+  property("ActiveGame private constructor works") = forAll {
+    (dim: Dim, bombs: List[Square]) =>
+      val visible: Map[Square, MSValue] = bombs.headOption match {
+        case None     => Map()
+        case Some(sq) => Map(sq -> Bomb)
+      }
+
+      // bombs in visible aren't allowed and games with no bombs aren't allowed
+      ActiveGame(dim, visible, bombs).isEmpty
   }
 
 }
