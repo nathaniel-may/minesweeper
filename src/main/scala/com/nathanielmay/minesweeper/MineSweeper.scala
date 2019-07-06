@@ -24,7 +24,6 @@ sealed trait GameResult
 case object Win  extends GameResult
 case object Lose extends GameResult
 
-//awkward construction until traits can take params: https://docs.scala-lang.org/sips/trait-parameters.html
 sealed trait MineSweeper {
   val dim:     Dim
   val visible: Map[Square, MSValue]
@@ -36,14 +35,14 @@ sealed trait MineSweeper {
       .mkString("\n")
 }
 
-object MineSweeper{
+object MineSweeper {
   import FunctionalShuffle.shuffle
 
   def indexToSquare(dim: Dim)(i: Int): Square =
     Square(H(i / dim.v), V(i % dim.v))
 
   def randBombs(dim: Dim, b: Int): Rand[List[Square]] = for {
-    stream  <- shuffle[Boolean](Stream.fill(b)(true) #::: Stream.fill(dim.area - b)(false))
+    stream  <- shuffle(Stream.fill(b)(true) #::: Stream.fill(dim.area - b)(false))
     bombs   =  stream.zipWithIndex.filter(_._1).map(_._2)
     squares =  bombs.map(indexToSquare(dim)).toList
   } yield squares
@@ -52,20 +51,33 @@ object MineSweeper{
   implicit def vToInt(v: V): Int = v.value
 }
 
-object Game {
+object ActiveGame {
   //standard game creation
-  def apply(dim: Dim, bombs: Int): Option[Game] =
-    if (bombs >= dim.area || bombs < 1) None
-    else MineSweeper.randBombs(dim, bombs)
-      .map { Game(dim, _) }
+  def apply(dim: Dim, bombs: Int): Option[MineSweeper] =
+    if (bombs >= dim.area || bombs < 1)
+      None
+    else MineSweeper
+      .randBombs(dim, bombs)
+      .map { bombs =>
+        if (bombs.forall(dim.contains))
+          ActiveGame(dim, Map(), bombs)
+        else
+          None
+      }
       .eval(new scala.util.Random(System.nanoTime()))
 
-  private[minesweeper] def apply(dim: Dim, bombs: List[Square]): Option[Game] =
-    if (bombs.forall(dim.contains)) Some(Game(dim, Map(), bombs))
-    else None
+  private[minesweeper] def apply(dim: Dim, visible: Map[Square, MSValue], bombs: List[Square]): Option[MineSweeper] =
+    if (bombs.map(dim.contains).exists(!_))
+      None
+    else if (visible.values.toStream.contains(Bomb))
+      Some(FinalGame(dim, visible, Lose))
+    else if (visible.size == dim.area - bombs.size)
+      Some(FinalGame(dim, visible, Win))
+    else
+      Some(new ActiveGame(dim, visible, bombs))
 }
 
-case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Square]) extends MineSweeper {
+case class ActiveGame private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Square]) extends MineSweeper {
   //called when UI receives a click
   def reveal(sq: Square): MineSweeper = {
     def neighbors(square: Square): List[Square] =
@@ -89,15 +101,14 @@ case class Game private (dim: Dim, visible: Map[Square, MSValue], bombs: List[Sq
       }
     }
 
-    if (bombs.contains(sq)) EndGame(dim, visible.updated(sq, Bomb), Lose)
-    else Game(dim, floodReveal(sq, visible), bombs) match {
-      case Game(d, v, bs) if v.size == d.area - bs.size => EndGame(d, v, Win)
-      case g: Game => g
-    }
+    if (bombs.contains(sq))
+      FinalGame(dim, visible.updated(sq, Bomb), Lose)
+    else
+      ActiveGame(dim, floodReveal(sq, visible), bombs).get
   }
 }
 
-case class EndGame private (dim: Dim, visible: Map[Square, MSValue], state: GameResult) extends MineSweeper {
+case class FinalGame private (dim: Dim, visible: Map[Square, MSValue], state: GameResult) extends MineSweeper {
   override def toString: String = List(super.toString, state).mkString("\n")
 }
 

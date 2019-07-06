@@ -3,8 +3,8 @@ package com.nathanielmay.minesweeper
 import Dim.{H, V}
 
 object Dim {
-  case class H(value: Int)
-  case class V(value: Int)
+  final case class H(value: Int)
+  final case class V(value: Int)
 
   def apply(h: H, v: V): Option[Dim] = {
     val max = scala.math.sqrt(Int.MaxValue).toInt // area val cannot hit Int overflow
@@ -13,8 +13,7 @@ object Dim {
   }
 }
 
-// private constructor forces creation via smart constructor in companion object
-case class Dim private (h: H, v: V) {
+final case class Dim private (h: H, v: V) {
   val area: Int = h.value * v.value
 
   def contains(s: Square): Boolean = contains(s.h) && contains(s.v)

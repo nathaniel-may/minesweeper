@@ -16,18 +16,18 @@ object GameProperties extends Properties("MineSweeper game") {
 
   property("must have more than one bomb") = forAll {
     (d: Dim, i: Int) =>
-      (i < 1) ==> Game(d, i).isEmpty
+      (i < 1) ==> ActiveGame(d, i).isEmpty
   }
 
   property("can't have more bombs than tiles") = forAll {
     (d: Dim, i: Int) =>
-      (i >= d.area) ==> Game(d, i).isEmpty
+      (i >= d.area) ==> ActiveGame(d, i).isEmpty
   }
 
   property("randomly played games always win or lose") = forAll {
     run: Run => run.run match {
-      case _: EndGame => true
-      case _          => false
+      case _: FinalGame => true
+      case _            => false
     }
   }
 
@@ -39,9 +39,9 @@ object GameProperties extends Properties("MineSweeper game") {
   }
 
   property("with bombs specified outside the dimension are rejected") = forAll(badInputGen) {
-    (bad: (Dim, List[Square])) =>
+    bad: (Dim, List[Square]) =>
       val (dim, bombs) = bad
-      Game(dim, bombs).isEmpty
+      ActiveGame(dim, Map(), bombs).isEmpty
   }
 
   property("randBombs generates bombs in the full range of tiles") = forAll(choose(Long.MinValue, Long.MaxValue), getDimGen(7)) {

@@ -62,7 +62,10 @@ object Generators {
   def runGen(maxDim: Int): Gen[Run] = for {
     dim     <- dimGen(maxDim)
     bombs   <- choose(1, dim.area-1)
-    game    =  Game(dim, bombs).get
     squares <- squareStreamGen(dim)
-  } yield Run(game, squares)
+    run     <- ActiveGame(dim, bombs) match {
+                 case Some(g: ActiveGame) => Gen.const(Run(g, squares))
+                 case _                   => runGen(maxDim)
+               }
+  } yield run
 }
