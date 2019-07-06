@@ -56,12 +56,7 @@ object ActiveGame {
       None
     else MineSweeper
       .randBombs(dim, bombs)
-      .map { bombs =>
-        if (bombs.forall(dim.contains))
-          ActiveGame(dim, Map(), bombs)
-        else
-          None
-      }
+      .map { ActiveGame(dim, Map(), _) }
       .eval(new scala.util.Random(System.nanoTime()))
 
   private[minesweeper] def apply(dim: Dim, visible: Map[Square, MSValue], bombs: List[Square]): Option[MineSweeper] =

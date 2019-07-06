@@ -79,4 +79,12 @@ object MineSweeperProperties extends Properties("A MineSweeper game") {
       }
   }
 
+  property("ActiveGame constructor works") = forAll {
+    (dim: Dim, bombs: Int) =>
+      ActiveGame(dim, bombs) match {
+        case None    => bombs <= 0 || bombs >= dim.area
+        case Some(_) => bombs >  0 && bombs < dim.area
+      }
+  }
+
 }
