@@ -16,8 +16,7 @@ object StringProperties extends Properties("Outputs of") {
   }
 
   property("minesweeper game strings contain end state") = forAll {
-    run: Run =>
-      run.run match {
+    run: Run => run.run match {
       case g: FinalGame => g.state match {
         case Win  => g.toString.contains("Win")
         case Lose => g.toString.contains("Lose")
