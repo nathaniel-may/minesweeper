@@ -1,33 +1,29 @@
 package testingUtil
 
-import com.nathanielmay.minesweeper.{Square, MineSweeper, ActiveGame, FinalGame}
+import com.nathanielmay.minesweeper.{ActiveGame, FinalGame, MineSweeper, Square}
+import scala.annotation.tailrec
 
 object Util {
 
-  // TODO make def runToEnd: Final and def run: Active
-  case class Run(game: ActiveGame, squares: Stream[Square]) {
-    val run: MineSweeper = game.revealAll(squares)
-    override def toString: String = List("", run, squares).mkString("\n")
-  }
+  final case class Run(game: MineSweeper) {
+    private val moves: Stream[Square] =
+      (0 until game.dim.area)
+        .toStream
+        .flatMap(Square.fromIndex(game.dim))
 
-  // TODO move into Run
-  object TestableGame {
-    // explicitly tail recursive here rather than defining in class
-    def revealAll(game: MineSweeper, turns: Stream[Square]): MineSweeper = game match {
-      case end:  FinalGame => end
-      case game: ActiveGame    => turns match {
-        case sq #:: sqs   => revealAll(game.reveal(sq), sqs)
-        case Stream.Empty => game
-      }}
-  }
+    def run: MineSweeper = {
+      @tailrec
+      def go(g: MineSweeper, m: Stream[Square]): MineSweeper =
+        m match {
+          case Stream.Empty => game
+          case sq #:: sqs   => g match {
+            case g: ActiveGame => go(g.reveal(sq), sqs)
+            case g: FinalGame  => g
+          }
+        }
 
-  // TODO unnecessary implicit
-  implicit class TestableGame(game: ActiveGame) {
-    def revealAll(turns: List[Square]): MineSweeper =
-      TestableGame.revealAll(game, turns.toStream)
-
-    def revealAll(turns: Stream[Square]): MineSweeper =
-      TestableGame.revealAll(game, turns)
+      go(game, moves)
+    }
   }
 
 }

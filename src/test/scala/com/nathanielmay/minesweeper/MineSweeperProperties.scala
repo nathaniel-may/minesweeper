@@ -28,7 +28,7 @@ object MineSweeperProperties extends Properties("A MineSweeper game") {
       (i >= d.area) ==> ActiveGame(d, i).isEmpty
   }
 
-  property("randomly played games always win or lose") = forAll {
+  property("randomly played games win or lose by at most revealing each square once") = forAll {
     run: Run => run.run match {
       case _: FinalGame => true
       case _            => false
@@ -70,5 +70,13 @@ object MineSweeperProperties extends Properties("A MineSweeper game") {
         go(Set(), infiniteSamples, 100)
       }
     }
+
+  property("square.fromIndex works") = forAll {
+    (dim: Dim, idx: Int) =>
+      Square.fromIndex(dim)(idx) match {
+        case None     => idx < 0 || idx >= dim.area
+        case Some(sq) => sq.h.value * dim.v + sq.v.value == idx
+      }
+  }
 
 }

@@ -23,30 +23,20 @@ object Generators {
     v <- if (h == 1) choose(2, maxDim) else choose(1, maxDim)
   } yield Dim(h, v).get
 
-  def squareStreamGen(dim: Dim): Gen[Stream[Square]] =
-    pick(dim.area, allSquares(dim)).map(_.toStream)
-
-  def allSquares(dim: Dim): List[Square] = (for {
-    h <- 0 until dim.h.value
-    v <- 0 until dim.v.value
-  } yield Square(H(h), V(v))).toList
-
   def squareGen(dim: Dim): Gen[Square] = for {
     h <- choose(0, dim.h.value)
     v <- choose(0, dim.v.value)
   } yield Square(h, v)
 
-  def badSquareGen(dim: Dim): Gen[Square] = {
-    val badSquares = List(
+  def badSquareGen(dim: Dim): Gen[Square] =
+    Gen.oneOf(List(
       Square(dim.h+1, dim.v+1),
       Square(dim.h,   dim.v+1),
       Square(dim.h+1, dim.v),
       Square(-1,      -1),
       Square(0,       -1),
       Square(-1,      0) )
-
-    Gen.pick(1, badSquares).flatMap(_.head)
-  }
+    )
 
   def badInputGen(maxDim: Int): Gen[(Dim, List[Square])] = for {
     dim   <- dimGen(maxDim)
@@ -55,13 +45,11 @@ object Generators {
     good  <- Gen.listOfN(count-1, squareGen(dim))
   } yield (dim, bad :: good)
 
-  def runGen(maxDim: Int): Gen[Run] = for {
+  def gameGen(maxDim: Int): Gen[MineSweeper] = for {
     dim     <- dimGen(maxDim)
     bombs   <- choose(1, dim.area-1)
-    squares <- squareStreamGen(dim)
-    run     <- ActiveGame(dim, bombs) match {
-                 case Some(g: ActiveGame) => Gen.const(Run(g, squares))
-                 case _                   => runGen(maxDim)
-               }
-  } yield run
+  } yield ActiveGame(dim, bombs).get
+
+  def runGen(maxDim: Int): Gen[Run] =
+    gameGen(maxDim).map(Run.apply)
 }

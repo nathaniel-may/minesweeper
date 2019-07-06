@@ -4,7 +4,12 @@ import Dim.{H, V, hToInt, vToInt}
 import shuffle.FunctionalShuffle, FunctionalShuffle.{shuffle, Rand}
 
 
-case class Square(h: H, v: V)
+final case class Square(h: H, v: V)
+object Square {
+  def fromIndex(dim: Dim)(i: Int): Option[Square] =
+    if(i < 0 || i >= dim.area) None
+    else Some(Square(H(i / dim.v), V(i % dim.v)))
+}
 
 //sum type to disambiguate boolean flags
 private sealed trait Visibility
@@ -35,15 +40,12 @@ sealed trait MineSweeper {
 }
 
 object MineSweeper {
-  def indexToSquare(dim: Dim)(i: Int): Square =
-    Square(H(i / dim.v), V(i % dim.v))
-
   def randBombs(dim: Dim, b: Int): Rand[List[Square]] =
     shuffle(Stream.fill(b)(true) #::: Stream.fill(dim.area - b)(false))
       .map {
         _.zipWithIndex
         .filter(_._1)
-        .map { case (_, idx) => indexToSquare(dim)(idx) }
+        .flatMap { case (_, idx) => Square.fromIndex(dim)(idx) }
         .toList
       }
 }
@@ -99,6 +101,8 @@ case class ActiveGame private (dim: Dim, visible: Map[Square, MSValue], bombs: L
 
     if (bombs.contains(sq))
       FinalGame(dim, visible.updated(sq, Bomb), Lose)
+    else if (visible.contains(sq))
+      this
     else
       ActiveGame(dim, floodReveal(sq, visible), bombs).get
   }
