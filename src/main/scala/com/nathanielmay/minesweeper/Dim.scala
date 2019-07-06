@@ -1,10 +1,14 @@
 package com.nathanielmay.minesweeper
 
 import Dim.{H, V}
+import scala.language.implicitConversions
 
 object Dim {
   final case class H(value: Int)
   final case class V(value: Int)
+
+  private[minesweeper] implicit def hToInt(h: H): Int = h.value
+  private[minesweeper] implicit def vToInt(v: V): Int = v.value
 
   def apply(h: H, v: V): Option[Dim] = {
     val max = scala.math.sqrt(Int.MaxValue).toInt // area val cannot hit Int overflow

@@ -4,7 +4,6 @@ package com.nathanielmay.minesweeper
 import org.scalacheck.{Properties, Prop}, Prop.forAll
 
 // project
-import testingUtil.Arbitrarily.aRun
 import testingUtil.Util.Run
 
 

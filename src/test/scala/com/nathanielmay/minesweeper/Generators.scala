@@ -1,22 +1,12 @@
-package testingUtil
+package com.nathanielmay.minesweeper
 
 // scalacheck
-import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Gen.{choose, pick}
+import org.scalacheck.Gen
 
 // project
-import com.nathanielmay.minesweeper._, Dim.{H, V}
-import MineSweeper.{hToInt ,vToInt}
-import testingUtil.Util.{hAble, vAble, Run}
-
-object Arbitrarily {
-  import Generators._
-
-  implicit val aDim: Arbitrary[Dim] = Arbitrary(dimGen(20))
-  implicit val aRun: Arbitrary[Run] = Arbitrary(runGen(20))
-
-  val getDimGen: Int => Gen[Dim] = dimGen
-}
+import com.nathanielmay.minesweeper.Dim._
+import testingUtil.Util.{Run, hAble, vAble}
 
 //generating enormous minesweeper games takes forever to test
 //values too high can cause a stackoverflow
@@ -52,8 +42,8 @@ object Generators {
     Gen.pick(1, badSquares).flatMap(_.head)
   }
 
-  val badInputGen: Gen[(Dim, List[Square])] = for {
-    dim   <- Arbitrarily.aDim.arbitrary
+  def badInputGen(maxDim: Int): Gen[(Dim, List[Square])] = for {
+    dim   <- dimGen(maxDim)
     count <- Gen.choose(1, dim.area-1)
     bad   <- badSquareGen(dim)
     good  <- Gen.listOfN(count-1, squareGen(dim))

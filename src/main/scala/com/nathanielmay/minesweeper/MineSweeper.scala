@@ -1,8 +1,7 @@
 package com.nathanielmay.minesweeper
 
-import MineSweeper.{hToInt, vToInt}
-import Dim.{H, V}
-import shuffle.FunctionalShuffle, FunctionalShuffle.Rand
+import Dim.{H, V, hToInt, vToInt}
+import shuffle.FunctionalShuffle, FunctionalShuffle.{shuffle, Rand}
 
 
 case class Square(h: H, v: V)
@@ -14,7 +13,7 @@ private case object Hidden extends Visibility
 
 //sum type for bombs and ints
 sealed trait MSValue
-case object Bomb extends MSValue{ override def toString = "B" }
+case object Bomb extends MSValue { override def toString = "B" }
 case class NearBombs(n: Int) extends MSValue{
   override def toString: String = n.toString
 }
@@ -30,14 +29,12 @@ sealed trait MineSweeper {
 
   override def toString: String =
     (0 until dim.v).toList
-      .map(v => (0 until dim.h).toList.map(h => Square(H(h), V(v))))
-      .map(row => row.map(visible.getOrElse(_, " ").toString).mkString("|","|","|"))
+      .map { v => (0 until dim.h).toList.map { h => Square(H(h), V(v)) } }
+      .map { row => row.map(visible.getOrElse(_, " ").toString).mkString("|","|","|") }
       .mkString("\n")
 }
 
 object MineSweeper {
-  import FunctionalShuffle.shuffle
-
   def indexToSquare(dim: Dim)(i: Int): Square =
     Square(H(i / dim.v), V(i % dim.v))
 
@@ -49,13 +46,9 @@ object MineSweeper {
         .map { case (_, idx) => indexToSquare(dim)(idx) }
         .toList
       }
-
-  implicit def hToInt(h: H): Int = h.value
-  implicit def vToInt(v: V): Int = v.value
 }
 
 object ActiveGame {
-  //standard game creation
   def apply(dim: Dim, bombs: Int): Option[MineSweeper] =
     if (bombs >= dim.area || bombs < 1)
       None
