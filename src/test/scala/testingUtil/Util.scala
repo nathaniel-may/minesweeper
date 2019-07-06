@@ -1,17 +1,16 @@
 package testingUtil
 
-import com.nathanielmay.minesweeper.{Dim, Square, MineSweeper, ActiveGame, FinalGame}, Dim.{H, V}
+import com.nathanielmay.minesweeper.{Square, MineSweeper, ActiveGame, FinalGame}
 
 object Util {
 
-  implicit def hAble(i: Int): H = H(i)
-  implicit def vAble(i: Int): V = V(i)
-
+  // TODO make def runToEnd: Final and def run: Active
   case class Run(game: ActiveGame, squares: Stream[Square]) {
     val run: MineSweeper = game.revealAll(squares)
     override def toString: String = List("", run, squares).mkString("\n")
   }
 
+  // TODO move into Run
   object TestableGame {
     // explicitly tail recursive here rather than defining in class
     def revealAll(game: MineSweeper, turns: Stream[Square]): MineSweeper = game match {
@@ -22,6 +21,7 @@ object Util {
       }}
   }
 
+  // TODO unnecessary implicit
   implicit class TestableGame(game: ActiveGame) {
     def revealAll(turns: List[Square]): MineSweeper =
       TestableGame.revealAll(game, turns.toStream)

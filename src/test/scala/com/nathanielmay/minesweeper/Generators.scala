@@ -4,13 +4,19 @@ package com.nathanielmay.minesweeper
 import org.scalacheck.Gen.{choose, pick}
 import org.scalacheck.Gen
 
+// scala
+import scala.language.implicitConversions
+
 // project
 import com.nathanielmay.minesweeper.Dim._
-import testingUtil.Util.{Run, hAble, vAble}
+import testingUtil.Util.Run
 
 //generating enormous minesweeper games takes forever to test
 //values too high can cause a stackoverflow
 object Generators {
+
+  private implicit def hAble(i: Int): H = H(i)
+  private implicit def vAble(i: Int): V = V(i)
 
   def dimGen(maxDim: Int): Gen[Dim] = for {
     h <- choose(1, maxDim)
