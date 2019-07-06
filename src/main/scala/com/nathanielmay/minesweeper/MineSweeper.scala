@@ -41,11 +41,14 @@ object MineSweeper {
   def indexToSquare(dim: Dim)(i: Int): Square =
     Square(H(i / dim.v), V(i % dim.v))
 
-  def randBombs(dim: Dim, b: Int): Rand[List[Square]] = for {
-    stream  <- shuffle(Stream.fill(b)(true) #::: Stream.fill(dim.area - b)(false))
-    bombs   =  stream.zipWithIndex.filter(_._1).map(_._2)
-    squares =  bombs.map(indexToSquare(dim)).toList
-  } yield squares
+  def randBombs(dim: Dim, b: Int): Rand[List[Square]] =
+    shuffle(Stream.fill(b)(true) #::: Stream.fill(dim.area - b)(false))
+      .map {
+        _.zipWithIndex
+        .filter(_._1)
+        .map { case (_, idx) => indexToSquare(dim)(idx) }
+        .toList
+      }
 
   implicit def hToInt(h: H): Int = h.value
   implicit def vToInt(v: V): Int = v.value
@@ -97,7 +100,7 @@ case class ActiveGame private (dim: Dim, visible: Map[Square, MSValue], bombs: L
           .filterNot(midFlood.contains)
           .foldLeft(midFlood.updated(toReveal, NearBombs(0))) {
             (m, sq) => floodReveal(sq, m) }
-        case value: NearBombs => midFlood.updated(toReveal, value)
+        case value => midFlood.updated(toReveal, value)
       }
     }
 
